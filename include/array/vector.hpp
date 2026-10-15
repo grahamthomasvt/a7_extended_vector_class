@@ -25,109 +25,167 @@ class Vector {
         /// TODO: Constructs a vector with the specified number of elements
         /// Each Element is Value Initialized
         /// @param n number of elements in the vector
-        Vector(int n);
+    Vector(int n) {
+        if (n < 0) throw std::invalid_argument("Invalid size");
+        data = new T[n]{};
+        cap = n;
+        sz = n;
+    }
 
         /// TODO: Returns the current capacity of the underlying array
         /// @return the size of the underlying array
-        int capacity() const;
+    int capacity() const {return cap;}
 
         /// TODO: Returns the number of elements stored
         /// @return the number of elements stored
-        int size() const;
+    int size() const {return sz;}
 
         /// TODO: Tests whether the vector is empty.
         /// @return true if the vector is empty, false otherwise
-        bool empty() const;
+    bool empty() const {return sz == 0;}
 
         /// TODO: Returns const reference to the element at index i
         /// behavior is undefined if i is out of bounds
         /// @param i index of desired element
         /// @return element at index i
-        const T& operator[](int i) const;
+    const T& operator[](int i) const {return data[i];}
 
         /// TODO: Returns reference to the element at index i
         /// behavior is undefined if i is out of bounds
         /// @param i index of desired element
         /// @return element at index i
-        T& operator[](int i);
+    T& operator[](int i) {return data[i];}
 
         /// TODO: Returns const reference to the element at index i
         /// raises out_of_range exception with invalid index
         /// @param i index of desired element
         /// @return element at index i
         /// @throw out_of_range exception if index is invalid for current vector
-        const T& at(int i) const;
+    const T& at(int i) const {
+        if (i < 0 || i >= sz) throw std::out_of_range("Invalid index");
+        return data[i];
+    }
 
         /// TODO: Returns reference to the element at index i
         /// raises out_of_range exception with invalid index
         /// @param i index of desired element
         /// @return element at index i
         /// @throw out_of_range exception if index is invalid for current vector
-        T& at(int i);
-
+    T& at(int i) {
+        if (i < 0 || i >= sz) throw std::out_of_range("Invalid index");
+        return data[i];
+    }
+    
         /// TODO: Returns a const reference to the first element
         /// behavior is undefined if vector is empty
         /// @return reference to first element
-        const T& front() const;
+    const T& front() const {return data[0];}
 
         /// TODO: Returns a live reference to the first element
         /// behavior is undefined if vector is empty
         /// @return reference to first element
-        T& front();
+    T& front() {return data[0];}
 
         /// TODO: Returns a const reference to the last element
         /// behavior is undefined if vector is empty
         /// @return reference to last element
-        const T& back() const;
+    const T& back() const {return data[sz-1];}
 
         /// TODO: Returns a live reference to the last element
         /// behavior is undefined if vector is empty
         /// @return reference to last element
-        T& back();
+    T& back() {return data[sz-1];}
 
         /// TODO: Inserts an element at end of the vector
         /// @param elem   the new element
-        void push_back(const T& elem);
+    void push_back(const T& elem) {
+        if (sz == cap) reserve(std::max(1, 2 * cap));
+        data[sz++] = elem;
+        sz++;
+    }
 
         /// TODO: Removes the last element from the vector
         /// Calls shrink() after removing the element to reduce unused capacity when appropriate
         /// Behavior is undefined if the vector is empty
-        void pop_back();
+    void pop_back() {
+        sz--;
+        shrink();
+    }
 
         /// TODO: Inserts an element at index i; 
         /// behavior is undefined if i is out of bounds
         /// @param i      index at which new element should be placed
         /// @param elem   the new element
-        void insert(int i, const T& elem);
+    void insert(int i, const T& elem) {
+        if (sz == cap)
+            reserve(std::max(1, 2 * cap));
+        for (int k = sz-1; k >= i; k--) {data[k+1] = std::move(data[k]);}
+        data[i] = elem;
+        sz++;
+    }
 
         /// TODO: Removes the element at index i and shifts subsequent elements left
         /// Calls shrink() after removing the element to reduce unused capacity when appropriate
         /// Behavior is undefined if i is out of bounds
         /// @param i index of element to be removed
-        void erase(int i);
+    void erase(int i) {
+        for (int k = i; k < sz - 1; k++) {data[k] = std::move(data[k+1]);}
+        sz--;
+        shrink();
+    }
 
         /// TODO: Requests that the vector capacity be at least as large as the indicated capacity
         /// The function has no effect if the current capacity is already large enough
         /// @param minimum the minimum capacity after the operation
-        void reserve(int minimum);
+    void reserve(int minimum) {
+        if (cap < minimum) {
+            T* temp = new T[minimum]{};
+            for (int i = 0; i < sz; i++) temp[i] = std::move(data[i]);
+            delete[] data;
+            data = temp;
+            cap = minimum;
+        }
+    }
     
         /// TODO: Changes the capacity of the vector to new_cap
         /// Existing elements are preserved in their current order
         /// new_cap must be at least as large as the current size
         /// If new_cap is 0, no array is allocated
         /// @param new_cap the new capacity of the vector
-        void reallocate(int new_cap);
+    void reallocate(int new_cap) {
+        if (new_cap >= sz) {
+            T* temp = new T[new_cap]{};
+            for (int i = 0; i < sz; i++) temp[i] = std::move(data[i]);
+            delete[] data;
+            data = temp;
+            cap = new_cap;
+        }
+    }
 
         /// TODO: Reduces the capacity of the vector when there is substantial unused space
         /// If the size is at most one-fourth of the current capacity, reduces the capacity by half
         /// This function does not reduce the capacity below 1
-        void shrink();
+    void shrink() {
+        if (cap/4 >= sz) {
+            T* temp = new T[std::max(1, cap/2)]{};
+            for (int i = 0; i < sz; i++) temp[i] = std::move(data[i]);
+            delete[] data;
+            data = temp;
+            cap = std::max(1, cap/2);
+        }
+    }
         
         /// TODO: Removes unused capacity from the vector
         /// Reduces the capacity to match the current size
         /// If the vector is empty, the capacity becomes 0
         /// The function has no effect if capacity is already equal to size
-        void shrink_to_fit();
+    void shrink_to_fit() {
+        T* temp = new T[sz]();
+        for (int i = 0; i < sz; i++) temp[i] = std::move(data[i]);
+        delete[] data;
+        data = temp;
+        cap = sz;
+    }
 
     private:
         /// TODO: Write a helper function to make a deep copy of another vector
@@ -144,7 +202,7 @@ class Vector {
 
     public:
         /// TODO: Destructor
-        ~Vector();
+    ~Vector() {delete[] data;}
 
         /// TODO: Write the copy constructor
         /// Create an independent copy of the given vector
@@ -268,7 +326,7 @@ class Vector {
         /// Removes the element at the given iterator position
         /// @param it iterator defining the position of element to be removed
         /// @return iterator just beyond the removed element
-        iterator erase(iterator it)
+    iterator erase(iterator it);
     
 }; // Vector class
 
