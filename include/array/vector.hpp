@@ -28,8 +28,7 @@ class Vector {
     Vector(int n) {
         if (n < 0) throw std::invalid_argument("Invalid size");
         data = new T[n]{};
-        cap = n;
-        sz = n;
+        cap = sz = n;
     }
 
         /// TODO: Returns the current capacity of the underlying array
@@ -192,13 +191,24 @@ class Vector {
         /// Copy the capacity and size
         /// Allocate a new array and copy all existing elements
         /// Assume the current vector has data as nullptr
-        void clone(const Vector& other);
+    void clone(const Vector& other) {
+        sz = other.sz;
+        cap = other.cap;
+        data = new T[cap];
+        for (int i = 0; i < sz; i++) {data[i] = other.data[i];}
+    }
 
         /// TODO: Write helper function to transfer ownership from another vector
         /// Transfer the capacity, size, and data pointer
         /// Reset the source vector to an empty state
         /// Assume the current vector has data as nullptr
-        void transfer(Vector& other);
+    void transfer(Vector& other) {
+        sz = other.sz;
+        cap = other.cap;
+        data = other.data;
+        other.cap = other.sz = 0;
+        other.data = nullptr;
+    }
 
     public:
         /// TODO: Destructor
@@ -206,24 +216,36 @@ class Vector {
 
         /// TODO: Write the copy constructor
         /// Create an independent copy of the given vector
-        Vector(const Vector& other);
+    Vector(const Vector& other) {clone(other);}
 
         /// TODO: Write the copy assignment operator
         /// Handle self-assignment and release existing memory
         /// Copy the contents of the given vector
         /// Return a reference to the current vector
-        Vector& operator=(const Vector& other);
+    Vector& operator=(const Vector& other) {
+        if (this != &other) {
+            delete[] data;
+            clone(other);
+        }
+        return *this;
+    }
 
         /// TODO: Write the move constructor
         /// Transfer ownership of the resources from the given vector
         /// Leave the source vector empty
-        Vector(Vector&& other);
+    Vector(Vector&& other) {transfer(other);}
 
         /// TODO: Write the move assignment operator
         /// Handle self-assignment and release existing memory
         /// Transfer ownership of the resources from the given vector
         /// Return a reference to the current vector
-        Vector& operator=(Vector&& other);
+    Vector& operator=(Vector&& other) {
+        if (this != &other) {
+            delete[] data;
+            transfer(other);
+        }
+        return *this;
+    }
 
     public:
         /// TODO: Implement a bidirectional iterator for the Vector class
@@ -237,31 +259,45 @@ class Vector {
                 int ind;
             public:
                 /// TODO: Initialize the iterator with a vector pointer and an index
-                iterator(Vector* v=nullptr, int i=-1);
+            iterator(Vector* v=nullptr, int i=-1) : vec{v}, ind{i} {}
                 
                 /// TODO: Return a reference to the element at the current position
-                T& operator*() const;
+            T& operator*() const {return (*vec)[ind];}
 
                 /// TODO: Return a pointer to the element at the current position
-                T* operator->() const;
+            T* operator->() const {return &(*vec)[ind];}
 
                 /// TODO: Move to the next element and return the updated iterator
-                iterator& operator++();
+            iterator& operator++() {
+                ++ind;
+                return *this;
+            }
 
                 /// TODO: Move to the next element and return the previous iterator
-                iterator operator++(int);
+            iterator operator++(int) {
+                iterator old(*this);
+                ++ind;
+                return old;
+            }
 
                 /// TODO: Move to the previous element and return the updated iterator
-                iterator& operator--();
+            iterator& operator--() {
+                --ind;
+                return *this;
+            }
 
                 /// TODO: Move to the previous element and return the previous iterator
-                iterator operator--(int);
+            iterator operator--(int) {
+                iterator old(*this);
+                --ind;
+                return old;
+            }
 
                 /// TODO: Return true if both iterators refer to the same vector and index
-                bool operator==(iterator rhs) const;
+            bool operator==(iterator rhs) const {return (vec == rhs.vec && ind == rhs.ind);}
                 
                 /// TODO: Return true if the iterators refer to different positions or vectors
-                bool operator!=(iterator rhs) const;
+            bool operator!=(iterator rhs) const {return !(*this == rhs);}
         };
 
     public:
@@ -276,57 +312,77 @@ class Vector {
             
             public:
                 /// TODO: Initialize the const_iterator with a vector pointer and an index
-                const_iterator(const Vector* v=nullptr, int i=-1);
+            const_iterator(const Vector* v=nullptr, int i=-1)  : vec{v}, ind{i} {}
 
                 /// TODO: Return a constant reference to the current element
-                const T& operator*() const;
+            const T& operator*() const {return (*vec)[ind];}
 
                 /// TODO: Return a pointer to the current element without allowing modification
-                const T* operator->() const;
+            const T* operator->() const {return &(*vec)[ind];}
 
                 /// TODO: Move forward and return the updated iterator
-                const_iterator& operator++();
+            const_iterator& operator++() {
+                ++ind;
+                return *this;
+            }
 
                 /// TODO: Move forward and return the previous iterator
-                const_iterator operator++(int);
+            const_iterator operator++(int) {
+                const_iterator old(*this);
+                ++ind;
+                return old;
+            }
 
                 /// TODO: Move backward and return the updated iterator
-                const_iterator& operator--();
+            const_iterator& operator--() {
+                ++ind;
+                return *this;
+            }
 
                 /// TODO: Move backward and return the previous iterator
-                const_iterator operator--(int);
+            const_iterator operator--(int) {
+                const_iterator old(*this);
+                --ind;
+                return old;
+            }
 
                 /// TODO: Compare the vector pointers and indices for equality
-                bool operator==(const_iterator rhs) const;
+            bool operator==(const_iterator rhs) const {return (vec == rhs.vec && ind == rhs.ind);}
 
                 /// TODO: Determine whether two const_iterators are different
-                bool operator!=(const_iterator rhs) const;
+            bool operator!=(const_iterator rhs) const {return !(*this == rhs);}
         };
     public:
         /// TODO: Write the function to return an iterator to the first element
-        iterator begin();
+    iterator begin() {return iterator(this, 0);}
 
         /// TODO: Write the function to return an iterator past the last element
-        iterator end();
+    iterator end() {return iterator(this, sz);}
 
         /// TODO: Write the function to return a const_iterator to the first element
-        const_iterator begin() const;
+    const_iterator begin() const {return const_iterator(this, 0);}
 
         /// TODO: Write the function to return a const_iterator past the last element
-        const_iterator end() const;
+    const_iterator end() const {return const_iterator(this, sz);}
 
         /// TODO: Write the function to insert an element before the iterator position
         /// Inserts an element immediately before the given iterator position
         /// @param it     iterator defining the insertion position
         /// @param elem   the new element
         /// @return iterator of newly inserted element
-        iterator insert(iterator it, const T& elem);
+    iterator insert(iterator it, const T& elem) {
+        insert(it.ind, elem);
+        return it;
+    }
 
         /// TODO: Write the function to erase an element at the iterator position
         /// Removes the element at the given iterator position
         /// @param it iterator defining the position of element to be removed
         /// @return iterator just beyond the removed element
-    iterator erase(iterator it);
+    iterator erase(iterator it) {
+        erase(it.ind);
+        return it;
+    }
     
 }; // Vector class
 
