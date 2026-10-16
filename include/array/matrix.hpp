@@ -24,16 +24,39 @@ class Matrix {
                 append 0 to row  // initialize each element with 0
             append row to data
         */
-        Matrix(int r, int c);
+    Matrix(int r, int c) {
+        if (r < 0 || c < 0) throw std::out_of_range("Negative dimensions");
+        rows = r;
+        cols = c;
+        for (int i = 0; i < rows; i++) {
+            dsac::array::Vector<int> rowVec;
+            for (int k = 0; k < cols; k++) {
+                rowVec.push_back(0);
+            }
+            data.push_back(rowVec);
+        }
+    }
 
         /// TODO:
         //data.at(i).at(j)
-        int& operator()(int i, int j);
+    int& operator()(int i, int j) {
+        return data.at(i).at(j);
+    }
 
         // TODO:
         // throw std::out_of_range("dimensions must match")
         // result(i, j) = (*this)(i, j) + other(i, j)
-        Matrix operator+(Matrix& other);
+    Matrix operator+(Matrix& other) {
+        if (rows != other.rows || cols != other.cols)
+            throw std::out_of_range("dimensions must match");
+        Matrix temp(rows, cols);
+        for (int i = 0; i < rows; i++) {
+            for (int k = 0; k < cols; k++) {
+                temp(i, k) = (*this)(i, k) + other(i, k);
+            }
+        }
+        return temp;
+    }
 };
 
 }

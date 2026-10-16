@@ -100,7 +100,6 @@ class Vector {
     void push_back(const T& elem) {
         if (sz == cap) reserve(std::max(1, 2 * cap));
         data[sz++] = elem;
-        sz++;
     }
 
         /// TODO: Removes the last element from the vector
