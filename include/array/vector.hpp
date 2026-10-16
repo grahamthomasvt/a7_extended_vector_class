@@ -334,13 +334,13 @@ class Vector {
 
                 /// TODO: Move backward and return the updated iterator
             const_iterator& operator--() {
-                ++ind;
+                --ind;
                 return *this;
             }
 
                 /// TODO: Move backward and return the previous iterator
             const_iterator operator--(int) {
-                const const_iterator old(*this);
+                const_iterator old(*this);
                 --ind;
                 return old;
             }
